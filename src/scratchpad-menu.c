@@ -69,7 +69,7 @@ scratchpad_menu_new (GtkAccelGroup *accel_group)
   menu = g_object_new (scratchpad_menu_get_type (), NULL);
   
   gtk_widget_add_accelerator (menu, "activate", 
-                              accel_group, GDK_M, 
+                              accel_group, GDK_KEY_M, 
                               GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);  
 
   g_signal_connect_swapped (G_OBJECT (menu), "activate", 
