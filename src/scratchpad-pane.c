@@ -122,7 +122,7 @@ apply_preferences (ScratchpadPane *pane)
   if (fontname)
     g_free (fontname);
   
-  gtk_widget_modify_font (GTK_WIDGET (priv->textview), font_description);
+  gtk_widget_override_font (GTK_WIDGET (priv->textview), font_description);
   pango_font_description_free (font_description);  
   
   g_object_unref (preferences);
