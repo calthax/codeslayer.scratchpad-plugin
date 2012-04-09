@@ -17,14 +17,13 @@
  */
 
 #include <gtksourceview/gtksourceview.h>
-#include <codeslayer/codeslayer-preferences.h>
 #include "scratchpad-pane.h"
 
 static void scratchpad_pane_class_init  (ScratchpadPaneClass *klass);
 static void scratchpad_pane_init        (ScratchpadPane      *pane);
 static void scratchpad_pane_finalize    (ScratchpadPane      *pane);
 
-static void apply_preferences           (ScratchpadPane      *pane);
+static void preferences_changed_action  (ScratchpadPane      *pane);
 
 
 #define SCRATCHPAD_PANE_GET_PRIVATE(obj) \
@@ -34,7 +33,11 @@ typedef struct _ScratchpadPanePrivate ScratchpadPanePrivate;
 
 struct _ScratchpadPanePrivate
 {
-  GtkWidget *textview;
+  CodeSlayer            *codeslayer;
+  CodeSlayerPreferences *preferences;
+  GtkWidget             *textview;
+  gulong                 initialize_preferences_id;
+  gulong                 editor_preferences_changed_id;
 };
 
 G_DEFINE_TYPE (ScratchpadPane, scratchpad_pane, GTK_TYPE_VBOX)
@@ -71,23 +74,40 @@ scratchpad_pane_init (ScratchpadPane *pane)
 static void
 scratchpad_pane_finalize (ScratchpadPane *pane)
 {
+  ScratchpadPanePrivate *priv;
+  priv = SCRATCHPAD_PANE_GET_PRIVATE (pane);
+
+  g_signal_handler_disconnect (priv->preferences, priv->initialize_preferences_id);
+  g_signal_handler_disconnect (priv->preferences, priv->editor_preferences_changed_id);
+
   G_OBJECT_CLASS (scratchpad_pane_parent_class)->finalize (G_OBJECT(pane));
 }
 
 GtkWidget*
-scratchpad_pane_new (void)
+scratchpad_pane_new (CodeSlayer *codeslayer)
 {
+  ScratchpadPanePrivate *priv;
   GtkWidget *pane;
+
   pane = g_object_new (scratchpad_pane_get_type (), NULL);
-  apply_preferences (SCRATCHPAD_PANE (pane));
+  priv = SCRATCHPAD_PANE_GET_PRIVATE (pane);
+  priv->codeslayer = codeslayer;
+  priv->preferences = codeslayer_get_preferences (codeslayer);
+
+  priv->initialize_preferences_id = g_signal_connect_swapped (G_OBJECT (priv->preferences), "initialize-preferences",
+                                                              G_CALLBACK (preferences_changed_action), SCRATCHPAD_PANE (pane));
+  
+  priv->editor_preferences_changed_id = g_signal_connect_swapped (G_OBJECT (priv->preferences), "editor-preferences-changed",
+                                                                  G_CALLBACK (preferences_changed_action), SCRATCHPAD_PANE (pane));
+  
   return pane;
 }
 
 static void
-apply_preferences (ScratchpadPane *pane)
+preferences_changed_action (ScratchpadPane *pane)
 {
   ScratchpadPanePrivate *priv;
-  CodeSlayerPreferences *preferences;
+  
   gdouble editor_tab_width;
   gboolean enable_automatic_indentation;
   gboolean insert_spaces_instead_of_tabs;
@@ -96,26 +116,24 @@ apply_preferences (ScratchpadPane *pane)
   
   priv = SCRATCHPAD_PANE_GET_PRIVATE (pane);
   
-  preferences = codeslayer_preferences_new ();
-
-  editor_tab_width = codeslayer_preferences_get_double (preferences,
+  editor_tab_width = codeslayer_preferences_get_double (priv->preferences,
                                                         CODESLAYER_PREFERENCES_EDITOR_TAB_WIDTH);
   gtk_source_view_set_tab_width (GTK_SOURCE_VIEW (priv->textview), editor_tab_width);
   gtk_source_view_set_indent_width (GTK_SOURCE_VIEW (priv->textview), -1);
 
-  enable_automatic_indentation = codeslayer_preferences_get_boolean (preferences,
+  enable_automatic_indentation = codeslayer_preferences_get_boolean (priv->preferences,
                                                                      CODESLAYER_PREFERENCES_EDITOR_ENABLE_AUTOMATIC_INDENTATION);
   gtk_source_view_set_auto_indent (GTK_SOURCE_VIEW (priv->textview), 
                                    enable_automatic_indentation);
   gtk_source_view_set_indent_on_tab (GTK_SOURCE_VIEW (priv->textview),
                                      enable_automatic_indentation);
 
-  insert_spaces_instead_of_tabs = codeslayer_preferences_get_boolean (preferences,
+  insert_spaces_instead_of_tabs = codeslayer_preferences_get_boolean (priv->preferences,
                                                                       CODESLAYER_PREFERENCES_EDITOR_INSERT_SPACES_INSTEAD_OF_TABS);
   gtk_source_view_set_insert_spaces_instead_of_tabs (GTK_SOURCE_VIEW (priv->textview),
                                                      insert_spaces_instead_of_tabs);
 
-  fontname = codeslayer_preferences_get_string (preferences,
+  fontname = codeslayer_preferences_get_string (priv->preferences,
                                                 CODESLAYER_PREFERENCES_EDITOR_FONT);
   font_description = pango_font_description_from_string (fontname);
   
@@ -124,8 +142,6 @@ apply_preferences (ScratchpadPane *pane)
   
   gtk_widget_override_font (GTK_WIDGET (priv->textview), font_description);
   pango_font_description_free (font_description);  
-  
-  g_object_unref (preferences);
 }
 
 void

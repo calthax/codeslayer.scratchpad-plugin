@@ -20,6 +20,7 @@
 #define	__SCRATCHPAD_PANE_H__
 
 #include <gtk/gtk.h>
+#include <codeslayer/codeslayer.h>
 
 G_BEGIN_DECLS
 
@@ -44,7 +45,7 @@ struct _ScratchpadPaneClass
 
 GType scratchpad_pane_get_type (void) G_GNUC_CONST;
      
-GtkWidget*  scratchpad_pane_new (void);
+GtkWidget*  scratchpad_pane_new       (CodeSlayer *codeslayer);
 
 void        scratchpad_pane_add_text  (ScratchpadPane *pane, 
                                        const gchar    *header,

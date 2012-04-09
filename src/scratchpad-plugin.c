@@ -37,7 +37,7 @@ activate (CodeSlayer *codeslayer)
   GtkAccelGroup *accel_group;
   accel_group = codeslayer_get_menubar_accel_group (codeslayer);
   menu = scratchpad_menu_new (accel_group);
-  pane = scratchpad_pane_new ();
+  pane = scratchpad_pane_new (codeslayer);
 
   engine = scratchpad_engine_new (codeslayer, menu, pane);
 
