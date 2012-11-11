@@ -1,8 +1,3 @@
-INCLUDES = \
-    $(SCRATCHPADCODESLAYERPLUGIN_CFLAGS) \
-    -I$(top_srcdir) \
-    -I$(srcdir)
-
 lib_LTLIBRARIES = libscratchpadcodeslayerplugin.la
 
 libscratchpadcodeslayerplugin_la_SOURCES = \
@@ -14,4 +9,4 @@ libscratchpadcodeslayerplugin_la_SOURCES = \
     scratchpad-pane.h \
     scratchpad-plugin.c
 
-libscratchpadcodeslayerplugin_la_CPPFLAGS = -I$(top_srcdir)
+libscratchpadcodeslayerplugin_la_CPPFLAGS = $(SCRATCHPADCODESLAYERPLUGIN_CFLAGS) -I$(top_srcdir) -I$(srcdir)
