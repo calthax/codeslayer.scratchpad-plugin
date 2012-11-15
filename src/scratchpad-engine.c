@@ -28,13 +28,13 @@ typedef struct
 } Tag;
 
 
-static void scratchpad_engine_class_init  (ScratchpadEngineClass  *klass);
-static void scratchpad_engine_init        (ScratchpadEngine       *engine);
-static void scratchpad_engine_finalize    (ScratchpadEngine       *engine);
+static void scratchpad_engine_class_init  (ScratchpadEngineClass *klass);
+static void scratchpad_engine_init        (ScratchpadEngine      *engine);
+static void scratchpad_engine_finalize    (ScratchpadEngine      *engine);
 
-static void copy_action                   (ScratchpadEngine       *engine);
-static gchar* get_header                  (ScratchpadEngine       *engine);
-
+static void copy_action                   (ScratchpadEngine      *engine);
+static gchar* get_header                  (ScratchpadEngine      *engine, 
+                                           gint                   line_number);
                                                    
 #define SCRATCHPAD_ENGINE_GET_PRIVATE(obj) \
   (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SCRATCHPAD_ENGINE_TYPE, ScratchpadEnginePrivate))
@@ -95,19 +95,26 @@ copy_action (ScratchpadEngine *engine)
   CodeSlayerEditor *editor;
   GtkTextBuffer *buffer;
   GtkTextIter start, end;
+  gint line_number;
   gchar *header;              
   gchar *text;
   
   priv = SCRATCHPAD_ENGINE_GET_PRIVATE (engine);
   
   editor = codeslayer_get_active_editor (priv->codeslayer);
-  header = get_header (engine);
   
   buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (editor));
   gtk_text_buffer_get_selection_bounds (buffer, &start, &end);
   text = gtk_text_buffer_get_text (buffer, &start, &end, TRUE);
   
+  line_number = gtk_text_iter_get_line (&start);
+  
+  header = get_header (engine, line_number);
+  
   scratchpad_pane_add_text (SCRATCHPAD_PANE (priv->pane), header, text);
+  scratchpad_pane_create_links (SCRATCHPAD_PANE (priv->pane));
+  
+  codeslayer_show_side_pane (priv->codeslayer, GTK_WIDGET (priv->pane));
   
   if (text != NULL)
     g_free (text);
@@ -116,30 +123,20 @@ copy_action (ScratchpadEngine *engine)
 }
 
 static gchar*
-get_header (ScratchpadEngine *engine)
+get_header (ScratchpadEngine *engine, 
+            gint              line_number)
 {
   ScratchpadEnginePrivate *priv;
-  CodeSlayerProject *project;
   CodeSlayerDocument *document;
   const gchar *file_path;
-  const gchar *folder_path;
-  const gchar *project_name;
-  gchar *substr;
   gchar *header;
 
   priv = SCRATCHPAD_ENGINE_GET_PRIVATE (engine);
   
   document = codeslayer_get_active_editor_document (priv->codeslayer);
-  project = codeslayer_get_active_editor_project (priv->codeslayer);
-  
   file_path = codeslayer_document_get_file_path (document);
-  folder_path = codeslayer_project_get_folder_path (project);
-  project_name = codeslayer_project_get_name (project);
-  
-  substr = codeslayer_utils_substr (file_path, strlen(folder_path) + 1, strlen(file_path));
-  
-  header = g_strconcat (project_name, " - ", substr, NULL);
-  g_free (substr);
+
+  header = g_strdup_printf ("%s:%d", file_path, ++line_number);
 
   return header;
 }
