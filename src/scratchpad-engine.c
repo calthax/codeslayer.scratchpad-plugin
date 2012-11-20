@@ -112,7 +112,6 @@ copy_action (ScratchpadEngine *engine)
   header = get_header (engine, line_number);
   
   scratchpad_pane_add_text (SCRATCHPAD_PANE (priv->pane), header, text);
-  scratchpad_pane_create_links (SCRATCHPAD_PANE (priv->pane));
   
   codeslayer_show_side_pane (priv->codeslayer, GTK_WIDGET (priv->pane));
   

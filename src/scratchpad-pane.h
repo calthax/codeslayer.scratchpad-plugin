@@ -50,7 +50,6 @@ GtkWidget*  scratchpad_pane_new           (CodeSlayer     *codeslayer);
 void        scratchpad_pane_add_text      (ScratchpadPane *pane, 
                                            const gchar    *header,
                                            const gchar    *text);
-void        scratchpad_pane_create_links  (ScratchpadPane *pane);
 
 G_END_DECLS
 
