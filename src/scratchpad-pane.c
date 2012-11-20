@@ -18,7 +18,7 @@
 
 #include <stdlib.h>
 #include <gtksourceview/gtksourceview.h>
-#include <codeslayer/codeslayer-linker.h>
+#include <codeslayer/codeslayer-editor-linker.h>
 #include "scratchpad-pane.h"
 
 typedef struct
@@ -42,13 +42,13 @@ typedef struct _ScratchpadPanePrivate ScratchpadPanePrivate;
 
 struct _ScratchpadPanePrivate
 {
-  CodeSlayer            *codeslayer;
-  CodeSlayerPreferences *preferences;
-  CodeSlayerLinker      *linker;
-  GtkWidget             *text_view;
-  GtkTextBuffer         *buffer;
-  gulong                 initialize_preferences_id;
-  gulong                 editor_preferences_changed_id;
+  CodeSlayer             *codeslayer;
+  CodeSlayerPreferences  *preferences;
+  CodeSlayerEditorLinker *linker;
+  GtkWidget              *text_view;
+  GtkTextBuffer          *buffer;
+  gulong                  initialize_preferences_id;
+  gulong                  editor_preferences_changed_id;
 };
 
 G_DEFINE_TYPE (ScratchpadPane, scratchpad_pane, GTK_TYPE_VBOX)
@@ -90,6 +90,8 @@ scratchpad_pane_finalize (ScratchpadPane *pane)
   g_signal_handler_disconnect (priv->preferences, priv->initialize_preferences_id);
   g_signal_handler_disconnect (priv->preferences, priv->editor_preferences_changed_id);
   
+  g_object_unref (priv->linker);
+  
   G_OBJECT_CLASS (scratchpad_pane_parent_class)->finalize (G_OBJECT(pane));
 }
 
@@ -104,7 +106,7 @@ scratchpad_pane_new (CodeSlayer *codeslayer)
   priv->codeslayer = codeslayer;
   priv->preferences = codeslayer_get_preferences (codeslayer);
   
-  priv->linker = codeslayer_linker_new (codeslayer, GTK_TEXT_VIEW (priv->text_view));
+  priv->linker = codeslayer_editor_linker_new (codeslayer, GTK_TEXT_VIEW (priv->text_view));
 
   priv->initialize_preferences_id = g_signal_connect_swapped (G_OBJECT (priv->preferences), "initialize-preferences",
                                                               G_CALLBACK (preferences_changed_action), SCRATCHPAD_PANE (pane));
