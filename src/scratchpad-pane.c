@@ -18,7 +18,6 @@
 
 #include <stdlib.h>
 #include <gtksourceview/gtksourceview.h>
-#include <codeslayer/codeslayer-editor-linker.h>
 #include "scratchpad-pane.h"
 
 typedef struct
@@ -106,7 +105,7 @@ scratchpad_pane_new (CodeSlayer *codeslayer)
   priv->codeslayer = codeslayer;
   priv->preferences = codeslayer_get_preferences (codeslayer);
   
-  priv->linker = codeslayer_editor_linker_new (codeslayer, GTK_TEXT_VIEW (priv->text_view));
+  priv->linker = codeslayer_get_editor_linker (codeslayer, GTK_TEXT_VIEW (priv->text_view));
 
   priv->initialize_preferences_id = g_signal_connect_swapped (G_OBJECT (priv->preferences), "initialize-preferences",
                                                               G_CALLBACK (preferences_changed_action), SCRATCHPAD_PANE (pane));
