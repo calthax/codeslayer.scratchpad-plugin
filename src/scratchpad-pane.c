@@ -178,6 +178,8 @@ scratchpad_pane_add_text (ScratchpadPane *pane,
   
   gtk_text_buffer_get_start_iter (buffer, &iter);
   gtk_text_buffer_insert_with_tags_by_name (buffer, &iter, format_text, -1, "header", NULL);
+  
+  codeslayer_editor_create_links (priv->linker);
 
   g_free (format_text);
 }                                       
