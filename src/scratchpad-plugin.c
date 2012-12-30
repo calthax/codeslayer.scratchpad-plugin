@@ -35,20 +35,20 @@ G_MODULE_EXPORT void
 activate (CodeSlayer *codeslayer)
 {
   GtkAccelGroup *accel_group;
-  accel_group = codeslayer_get_menubar_accel_group (codeslayer);
+  accel_group = codeslayer_get_menu_bar_accel_group (codeslayer);
   menu = scratchpad_menu_new (accel_group);
   pane = scratchpad_pane_new (codeslayer);
 
   engine = scratchpad_engine_new (codeslayer, menu, pane);
 
-  codeslayer_add_to_menubar (codeslayer, GTK_MENU_ITEM (menu));
+  codeslayer_add_to_menu_bar (codeslayer, GTK_MENU_ITEM (menu));
   codeslayer_add_to_side_pane (codeslayer, pane, "ScratchPad");
 }
 
 G_MODULE_EXPORT void 
 deactivate (CodeSlayer *codeslayer)
 {
-  codeslayer_remove_from_menubar (codeslayer, GTK_MENU_ITEM (menu));
+  codeslayer_remove_from_menu_bar (codeslayer, GTK_MENU_ITEM (menu));
   codeslayer_remove_from_side_pane (codeslayer, pane);
   g_object_unref (engine);
 }
