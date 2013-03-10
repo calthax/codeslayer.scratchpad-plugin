@@ -2,7 +2,7 @@
 lib=libscratchpadcodeslayerplugin
 version=@PACKAGE_VERSION@
 name=ScratchPad
-description=A plugin to temporary place code snippets.
+description=A plugin to copy code snippets to a text area in the side pane.
 authors=Jeff Johnston <jeff.johnston.mn@gmail.com>
 copyright=Copyright © 2011 Jeff Johnston
 website=http://codeslayer.org
