@@ -32,7 +32,7 @@ static void scratchpad_pane_class_init  (ScratchpadPaneClass *klass);
 static void scratchpad_pane_init        (ScratchpadPane      *pane);
 static void scratchpad_pane_finalize    (ScratchpadPane      *pane);
 
-static void preferences_changed_action  (ScratchpadPane      *pane);
+static void registry_changed_action     (ScratchpadPane      *pane);
 
 #define SCRATCHPAD_PANE_GET_PRIVATE(obj) \
   (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SCRATCHPAD_PANE_TYPE, ScratchpadPanePrivate))
@@ -42,12 +42,12 @@ typedef struct _ScratchpadPanePrivate ScratchpadPanePrivate;
 struct _ScratchpadPanePrivate
 {
   CodeSlayer             *codeslayer;
-  CodeSlayerPreferences  *preferences;
+  CodeSlayerRegistry     *registry;
   CodeSlayerEditorLinker *linker;
   GtkWidget              *text_view;
   GtkTextBuffer          *buffer;
-  gulong                  initialize_preferences_id;
-  gulong                  editor_preferences_changed_id;
+  gulong                  registry_initialized_id;
+  gulong                  registry_changed_id;
 };
 
 G_DEFINE_TYPE (ScratchpadPane, scratchpad_pane, GTK_TYPE_VBOX)
@@ -86,8 +86,8 @@ scratchpad_pane_finalize (ScratchpadPane *pane)
   ScratchpadPanePrivate *priv;
   priv = SCRATCHPAD_PANE_GET_PRIVATE (pane);
 
-  g_signal_handler_disconnect (priv->preferences, priv->initialize_preferences_id);
-  g_signal_handler_disconnect (priv->preferences, priv->editor_preferences_changed_id);
+  g_signal_handler_disconnect (priv->registry, priv->registry_initialized_id);
+  g_signal_handler_disconnect (priv->registry, priv->registry_changed_id);
   
   g_object_unref (priv->linker);
   
@@ -103,21 +103,21 @@ scratchpad_pane_new (CodeSlayer *codeslayer)
   pane = g_object_new (scratchpad_pane_get_type (), NULL);
   priv = SCRATCHPAD_PANE_GET_PRIVATE (pane);
   priv->codeslayer = codeslayer;
-  priv->preferences = codeslayer_get_preferences (codeslayer);
+  priv->registry = codeslayer_get_registry (codeslayer);
   
   priv->linker = codeslayer_create_editor_linker (codeslayer, GTK_TEXT_VIEW (priv->text_view));
 
-  priv->initialize_preferences_id = g_signal_connect_swapped (G_OBJECT (priv->preferences), "initialize-preferences",
-                                                              G_CALLBACK (preferences_changed_action), SCRATCHPAD_PANE (pane));
+  priv->registry_initialized_id = g_signal_connect_swapped (G_OBJECT (priv->registry), "registry-initialized",
+                                                              G_CALLBACK (registry_changed_action), SCRATCHPAD_PANE (pane));
   
-  priv->editor_preferences_changed_id = g_signal_connect_swapped (G_OBJECT (priv->preferences), "editor-preferences-changed",
-                                                                  G_CALLBACK (preferences_changed_action), SCRATCHPAD_PANE (pane));
+  priv->registry_changed_id = g_signal_connect_swapped (G_OBJECT (priv->registry), "registry-changed",
+                                                        G_CALLBACK (registry_changed_action), SCRATCHPAD_PANE (pane));
   
   return pane;
 }
 
 static void
-preferences_changed_action (ScratchpadPane *pane)
+registry_changed_action (ScratchpadPane *pane)
 {
   ScratchpadPanePrivate *priv;
   
@@ -129,25 +129,25 @@ preferences_changed_action (ScratchpadPane *pane)
   
   priv = SCRATCHPAD_PANE_GET_PRIVATE (pane);
   
-  editor_tab_width = codeslayer_preferences_get_double (priv->preferences,
-                                                        CODESLAYER_PREFERENCES_EDITOR_TAB_WIDTH);
+  editor_tab_width = codeslayer_registry_get_double (priv->registry,
+                                                        CODESLAYER_REGISTRY_EDITOR_TAB_WIDTH);
   gtk_source_view_set_tab_width (GTK_SOURCE_VIEW (priv->text_view), editor_tab_width);
   gtk_source_view_set_indent_width (GTK_SOURCE_VIEW (priv->text_view), -1);
 
-  enable_automatic_indentation = codeslayer_preferences_get_boolean (priv->preferences,
-                                                                     CODESLAYER_PREFERENCES_EDITOR_ENABLE_AUTOMATIC_INDENTATION);
+  enable_automatic_indentation = codeslayer_registry_get_boolean (priv->registry,
+                                                                     CODESLAYER_REGISTRY_EDITOR_ENABLE_AUTOMATIC_INDENTATION);
   gtk_source_view_set_auto_indent (GTK_SOURCE_VIEW (priv->text_view), 
                                    enable_automatic_indentation);
   gtk_source_view_set_indent_on_tab (GTK_SOURCE_VIEW (priv->text_view),
                                      enable_automatic_indentation);
 
-  insert_spaces_instead_of_tabs = codeslayer_preferences_get_boolean (priv->preferences,
-                                                                      CODESLAYER_PREFERENCES_EDITOR_INSERT_SPACES_INSTEAD_OF_TABS);
+  insert_spaces_instead_of_tabs = codeslayer_registry_get_boolean (priv->registry,
+                                                                      CODESLAYER_REGISTRY_EDITOR_INSERT_SPACES_INSTEAD_OF_TABS);
   gtk_source_view_set_insert_spaces_instead_of_tabs (GTK_SOURCE_VIEW (priv->text_view),
                                                      insert_spaces_instead_of_tabs);
 
-  fontname = codeslayer_preferences_get_string (priv->preferences,
-                                                CODESLAYER_PREFERENCES_EDITOR_FONT);
+  fontname = codeslayer_registry_get_string (priv->registry,
+                                                CODESLAYER_REGISTRY_EDITOR_FONT);
   font_description = pango_font_description_from_string (fontname);
   
   if (fontname)
